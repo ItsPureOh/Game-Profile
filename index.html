@@ -1,0 +1,2210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pure's Game Profile</title>
+<style>
+:root{
+  --fg:#f6f6f1;
+  --muted:#9a9aa0;
+  --line:rgba(255,255,255,.18);
+  --pink:#ff7fae;
+  --violet:#9b7cff;
+  --blue:#77bfff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:#000}
+body{
+  margin:0;background:#000;color:var(--fg);
+  font-family:"Courier New",monospace;overflow-x:hidden
+}
+button{font:inherit}
+a{color:inherit}
+.scan{
+  position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:.03;
+  background:repeating-linear-gradient(0deg,transparent 0 2px,#fff 3px 3px)
+}
+#cursorGlow{
+  position:fixed;left:0;top:0;z-index:9997;pointer-events:none;
+  width:370px;height:370px;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(255,255,255,.24),rgba(255,255,255,.09) 18%,rgba(255,255,255,.03) 34%,transparent 68%);
+  mix-blend-mode:screen;filter:blur(2px);opacity:0;transition:opacity .15s
+}
+
+/* ---------- BOOT ---------- */
+#boot{
+  position:fixed;inset:0;z-index:10002;background:#000;
+  display:grid;place-items:center;padding:24px
+}
+.bootbox{width:min(760px,100%)}
+.boot-title{
+  font:900 clamp(30px,5vw,60px)/1 Arial,sans-serif;
+  letter-spacing:-.055em;margin:28px 0
+}
+.log{font-size:13px;line-height:1.9;color:#ccc}
+.bar{height:18px;border:2px solid #fff;padding:3px;margin-top:26px}
+.fill{height:100%;width:0;background:#fff}
+#pct{text-align:right;margin-top:8px;font-size:12px}
+#enter{
+  display:none;width:100%;margin-top:34px;padding:16px;
+  background:#000;color:#fff;border:2px solid #fff;
+  cursor:pointer;letter-spacing:.14em;animation:blink 1s steps(2) infinite
+}
+@keyframes blink{50%{opacity:.45}}
+
+/* ---------- BLACK HOLE ---------- */
+#transport{
+  position:fixed;inset:0;z-index:10001;background:#000;
+  display:none;place-items:center;overflow:hidden
+}
+.transport-wrap{
+  width:min(82vw,850px);aspect-ratio:1;position:relative;
+  display:grid;place-items:center
+}
+.blackhole{
+  width:100px;height:100px;border-radius:50%;background:#000;z-index:5;
+  box-shadow:0 0 0 6px #fff,0 0 28px 8px #fff,0 0 120px 48px rgba(255,255,255,.5);
+  animation:holeExpand 1.85s cubic-bezier(.22,.72,.15,1) forwards
+}
+.disc{
+  position:absolute;width:46%;height:16%;border:4px solid #fff;border-radius:50%;
+  box-shadow:0 0 18px #fff;transform:rotate(-13deg);
+  animation:discPulse .28s alternate infinite
+}
+.rays{
+  position:absolute;inset:-15%;
+  background:repeating-conic-gradient(from 0deg,transparent 0 3.8deg,#fff 4deg 4.35deg,transparent 4.6deg 8deg);
+  mask:radial-gradient(circle,transparent 0 12%,#000 13%);
+  opacity:.78;animation:spin .5s linear infinite
+}
+.transport-text{position:absolute;bottom:8%;font-size:10px;letter-spacing:.2em}
+@keyframes holeExpand{0%{transform:scale(.08)}70%{transform:scale(3.2)}100%{transform:scale(13)}}
+@keyframes discPulse{to{transform:rotate(-13deg) scaleX(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+#site{display:none}
+
+/* ---------- HERO ---------- */
+.hero{
+  min-height:100vh;position:relative;overflow:hidden;
+  background:#050505;border-bottom:1px solid var(--line)
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.64) 72%,#020204 100%),
+    linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.18) 45%,rgba(0,0,0,.58)),
+    url("assets/shin.jpg") center 30%/cover no-repeat;
+  filter:grayscale(1) contrast(1.08) brightness(.72);
+  transition:background .45s ease,filter .45s ease
+}
+
+/* compact music */
+.music{
+  position:absolute;top:18px;left:50%;transform:translateX(-50%);
+  z-index:12;width:min(760px,86vw);
+  display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;
+  padding:10px 14px;border:1px solid rgba(255,255,255,.13);
+  border-radius:22px;background:rgba(0,0,0,.74);backdrop-filter:blur(12px);
+  box-shadow:0 10px 30px rgba(0,0,0,.35)
+}
+.music-meta{display:flex;align-items:center;gap:10px;min-width:150px}
+.album{
+  width:40px;height:40px;border-radius:5px;border:1px solid rgba(255,255,255,.35);
+  background:url("assets/shin.jpg") center 28%/cover no-repeat
+}
+.music-meta b{display:block;font-size:12px}
+.music-meta small{color:#aaa;font-size:9px}
+.progress{
+  height:2px;background:#333;position:relative;cursor:pointer
+}
+.progress span{position:absolute;left:0;top:0;height:2px;background:#fff;width:0}
+.music button{
+  background:none;border:0;color:#fff;cursor:pointer;font-size:19px
+}
+.music-time{font-size:9px;color:#bbb}
+input[type=range]{accent-color:#fff;width:90px}
+
+.hero-content{
+  position:relative;z-index:5;min-height:100vh;
+  padding:145px 7vw 44px;
+  display:flex;flex-direction:column;justify-content:flex-end
+}
+.title-block{max-width:520px;margin-bottom:20px}
+.title-block h1{
+  font:900 clamp(70px,9vw,145px)/.76 Arial,sans-serif;
+  letter-spacing:-.08em;margin:0;
+  text-shadow:0 6px 30px rgba(0,0,0,.55)
+}
+.title-block h2{
+  font:900 clamp(22px,3vw,44px)/1 Arial,sans-serif;
+  color:var(--pink);margin:18px 0 14px;letter-spacing:-.05em
+}
+.welcome{font-size:11px;letter-spacing:.12em}
+
+
+/* pink star orbit around PURE'S title */
+.title-orbit{
+  position:absolute;
+  left:-58px;
+  top:-48px;
+  width:560px;
+  height:230px;
+  pointer-events:none;
+  z-index:-1;
+}
+.title-orbit-ring{
+  position:absolute;
+  inset:18px 18px 20px 4px;
+  border:2px solid rgba(255,127,174,.68);
+  border-radius:50%;
+  transform:rotate(-7deg);
+  box-shadow:
+    0 0 8px rgba(255,127,174,.45),
+    inset 0 0 8px rgba(255,127,174,.12);
+}
+.title-orbit-ring::after{
+  content:"";
+  position:absolute;
+  inset:22px 44px;
+  border:1px solid rgba(255,127,174,.28);
+  border-radius:50%;
+  transform:rotate(9deg);
+}
+.orbit-star{
+  --size:18px;
+  position:absolute;
+  width:var(--size);
+  height:var(--size);
+  left:50%;
+  top:50%;
+  margin:calc(var(--size) / -2);
+  filter:drop-shadow(0 0 8px rgba(255,127,174,.9));
+  animation:starOrbit var(--speed) linear infinite;
+}
+.orbit-star::before,
+.orbit-star::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  background:#ff8fbd;
+  border-radius:50%;
+}
+.orbit-star::before{
+  width:100%;
+  height:22%;
+  box-shadow:0 0 10px #ff8fbd;
+}
+.orbit-star::after{
+  width:22%;
+  height:100%;
+  box-shadow:0 0 10px #ff8fbd;
+}
+.orbit-star.s1{--size:18px;--speed:8s;transform-origin:-220px -45px}
+.orbit-star.s2{--size:12px;--speed:11s;transform-origin:190px 60px;animation-direction:reverse}
+.orbit-star.s3{--size:22px;--speed:14s;transform-origin:-120px 78px}
+.orbit-star.s4{--size:10px;--speed:9s;transform-origin:235px -35px;animation-direction:reverse}
+.orbit-star.s5{--size:15px;--speed:12s;transform-origin:-245px 18px}
+@keyframes starOrbit{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+.title-spark{
+  position:absolute;
+  width:6px;height:6px;border-radius:50%;
+  background:#ffc3dc;
+  box-shadow:0 0 8px #ff9cc6;
+  animation:sparkBlink 1.8s ease-in-out infinite;
+}
+.title-spark.a{left:8%;top:34%;animation-delay:.2s}
+.title-spark.b{right:5%;top:12%;animation-delay:.7s}
+.title-spark.c{right:18%;bottom:8%;animation-delay:1.1s}
+@keyframes sparkBlink{
+  0%,100%{opacity:.2;transform:scale(.7)}
+  50%{opacity:1;transform:scale(1.45)}
+}
+
+
+/* V1.8 fixed Shin background polish */
+.hero-copy-shade{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:min(62vw,900px);
+  pointer-events:none;
+  background:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.36) 58%,transparent);
+  z-index:2;
+}
+
+/* sticker center */
+.sticker-row{
+  width:min(1000px,88vw);margin:6px auto 12px;
+  display:flex;justify-content:center;align-items:flex-end;gap:10px
+}
+.sticker{
+  --rot:0deg;position:relative;width:180px;
+  background:#eee9db;color:#0c0c0c;border:4px solid #ece8dd;
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+  transform:rotate(var(--rot));
+  transition:box-shadow .18s ease;cursor:pointer
+}
+.sticker:hover{
+  animation:bump .42s ease both;z-index:8;
+  box-shadow:0 18px 38px rgba(0,0,0,.5)
+}
+@keyframes bump{
+  0%{transform:rotate(var(--rot)) translate(0,0)}
+  35%{transform:rotate(calc(var(--rot) + 2deg)) translate(3px,-6px)}
+  65%{transform:rotate(calc(var(--rot) - 1deg)) translate(-2px,-2px)}
+  100%{transform:rotate(var(--rot)) translateY(-4px)}
+}
+.sticker.active{
+  outline:2px solid var(--pink);
+  outline-offset:5px;
+  transform:rotate(var(--rot)) scale(1.065);
+  z-index:7;
+  box-shadow:0 18px 38px rgba(255,127,174,.16)
+}
+.sticker img{width:100%;height:155px;object-fit:cover;display:block}
+.sticker-photo{
+  width:100%;
+  height:155px;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+  filter:saturate(.92) contrast(1.02);
+}
+.s1 .sticker-photo{object-position:center 22%}
+.s2 .sticker-photo{object-position:center 38%}
+.s3 .sticker-photo{object-position:center 28%}
+.s5 .sticker-photo{object-position:center 40%}
+
+.sticker-cap{padding:10px 10px 12px}
+.sticker-cap b{display:block;font:900 15px/1 Arial,sans-serif;margin-bottom:5px}
+.sticker-cap small{font-size:8px;color:#555}
+.tape{
+  position:absolute;top:-10px;left:50%;
+  transform:translateX(-50%) rotate(-4deg);
+  width:64px;height:18px;background:rgba(236,230,210,.78);z-index:3
+}
+.s1{--rot:-6deg}.s2{--rot:2deg}.s3{--rot:5deg}.s4{--rot:-3deg}.s5{--rot:4deg}
+
+.media-art{
+  width:100%;height:155px;
+  position:relative;overflow:hidden
+}
+.media-art::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.14))
+}
+.nana-art{
+  background:
+    linear-gradient(130deg,#111 0 37%,#e8e8e8 38% 70%,#222 71%),
+    radial-gradient(circle at 30% 32%,#f06 0 12%,transparent 13%)
+}
+.manchester-art{background:linear-gradient(180deg,#d8e8ee 0 55%,#9aaab5 56% 70%,#33424f 71%)}
+.paprika-art{
+  background:
+    radial-gradient(circle at 52% 32%,#ff6b3d 0 13%,transparent 14%),
+    radial-gradient(circle at 37% 45%,#fff 0 10%,transparent 11%),
+    linear-gradient(135deg,#cf2b4f,#ffb03a 45%,#6d235f 75%,#111)
+}
+.ark-art{
+  background:
+    linear-gradient(145deg,#112436,#173d58 45%,#dcecf5 46% 54%,#273747 55%)
+}
+
+
+/* scroll curl transition between hero and PVP */
+.scroll-curl{
+  position:relative;
+  height:110px;
+  margin-top:-2px;
+  z-index:20;
+  overflow:hidden;
+  perspective:900px;
+  pointer-events:none;
+}
+.scroll-sheet{
+  position:absolute;
+  left:-4%;
+  width:108%;
+  height:120px;
+  top:-58px;
+  background:
+    linear-gradient(180deg,rgba(26,28,38,.98),rgba(4,5,10,.98));
+  border-bottom:1px solid rgba(255,127,174,.32);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,.55),
+    inset 0 -6px 22px rgba(255,127,174,.05);
+  transform-origin:50% 0%;
+  transition:transform .08s linear,border-radius .08s linear;
+}
+.scroll-sheet::before,
+.scroll-sheet::after{
+  content:"";
+  position:absolute;
+  bottom:-20px;
+  width:110px;
+  height:58px;
+  border-radius:50%;
+  background:linear-gradient(180deg,#11141d,#040509);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:inset 0 0 18px rgba(120,170,255,.08);
+}
+.scroll-sheet::before{left:-8px;transform:rotate(12deg)}
+.scroll-sheet::after{right:-8px;transform:rotate(-12deg)}
+.scroll-edge{
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:8px;
+  background:linear-gradient(90deg,transparent,#ff7fae 22%,#9b7cff 50%,#77bfff 78%,transparent);
+  filter:blur(2px);
+  opacity:.42;
+}
+.scroll-hint{
+  position:absolute;
+  left:50%;bottom:15px;
+  transform:translateX(-50%);
+  z-index:3;
+  font-size:9px;
+  color:#aaa;
+  letter-spacing:.16em;
+}
+.scroll-chevron{
+  display:block;
+  width:17px;height:17px;
+  margin:0 auto 5px;
+  border-right:3px solid #ff8fbd;
+  border-bottom:3px solid #ff8fbd;
+  transform:rotate(45deg);
+  filter:drop-shadow(0 0 7px #ff7fae);
+  animation:chev 1.4s ease-in-out infinite;
+}
+@keyframes chev{
+  0%,100%{transform:translateY(-3px) rotate(45deg);opacity:.5}
+  50%{transform:translateY(4px) rotate(45deg);opacity:1}
+}
+
+/* ---------- PVP / DIAMOND GLASS ARCHIVE ---------- */
+.pvp{
+  min-height:108vh;
+  padding:42px 5vw 112px;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 52% 47%,rgba(71,123,218,.11),transparent 29%),
+    radial-gradient(circle at 15% 16%,rgba(255,125,176,.05),transparent 22%),
+    radial-gradient(circle at 82% 78%,rgba(70,181,255,.045),transparent 20%),
+    linear-gradient(180deg,#020307 0%,#050812 55%,#010205 100%);
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.pvp::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-3;
+  pointer-events:none;
+  background-image:
+    radial-gradient(circle,#fff 0 1px,transparent 1.2px),
+    radial-gradient(circle,rgba(132,183,255,.72) 0 .7px,transparent .9px),
+    radial-gradient(circle,rgba(255,166,206,.48) 0 .6px,transparent .8px);
+  background-size:173px 173px,251px 251px,319px 319px;
+  background-position:17px 31px,89px 121px,211px 57px;
+  opacity:.42;
+}
+.space-nebula{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(64px);
+  opacity:.15;
+  pointer-events:none;
+  z-index:-1;
+}
+.nebula-a{
+  width:560px;height:300px;left:16%;top:34%;
+  background:radial-gradient(circle,rgba(78,118,255,.42),rgba(21,53,114,.03) 68%,transparent 72%);
+  transform:rotate(-12deg);
+}
+.nebula-b{
+  width:430px;height:260px;right:11%;bottom:7%;
+  background:radial-gradient(circle,rgba(255,100,168,.24),rgba(92,34,84,.025) 67%,transparent 72%);
+  transform:rotate(14deg);
+}
+.space-grid{
+  position:absolute;
+  left:50%;top:58%;
+  width:1020px;height:620px;
+  transform:translate(-50%,-50%) perspective(720px) rotateX(76deg);
+  background:
+    linear-gradient(rgba(110,160,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(110,160,255,.045) 1px,transparent 1px);
+  background-size:58px 58px;
+  mask-image:radial-gradient(circle,#000 0 19%,rgba(0,0,0,.82) 43%,transparent 73%);
+  opacity:.30;
+  pointer-events:none;
+}
+
+.diamond-stage{
+  position:relative;
+  z-index:7;
+  width:min(1160px,94vw);
+  height:650px;
+  margin:18px auto 0;
+  perspective:1500px;
+  transform-style:preserve-3d;
+}
+.diamond-shard{
+  --tilt-x:0deg;
+  --tilt-y:0deg;
+  --push-x:0px;
+  --push-y:0px;
+  --push-z:0px;
+  --glare-x:50%;
+  --glare-y:50%;
+  --glare-opacity:.26;
+  position:absolute;
+  border:0;
+  padding:0;
+  background:transparent;
+  cursor:pointer;
+  outline:none;
+  transform-style:preserve-3d;
+  transform:
+    translate3d(var(--push-x),var(--push-y),var(--push-z))
+    rotateX(var(--tilt-x))
+    rotateY(var(--tilt-y));
+  transition:transform .14s cubic-bezier(.2,.8,.2,1),filter .18s ease,opacity .18s ease;
+  will-change:transform;
+}
+.diamond-shard:hover,
+.diamond-shard:focus-visible{
+  --push-z:28px;
+  filter:drop-shadow(0 32px 38px rgba(0,0,0,.40)) drop-shadow(0 0 22px rgba(130,185,255,.10));
+}
+.diamond-shard.is-shattering{
+  opacity:0;
+  pointer-events:none;
+}
+.diamond-float{
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.shard-apex .diamond-float{animation:diamondFloatA 7.6s ease-in-out infinite}
+.shard-val .diamond-float{animation:diamondFloatB 8.6s ease-in-out infinite}
+@keyframes diamondFloatA{
+  0%,100%{transform:translate3d(0,-5px,0) rotateZ(-3deg)}
+  50%{transform:translate3d(9px,12px,20px) rotateZ(1deg)}
+}
+@keyframes diamondFloatB{
+  0%,100%{transform:translate3d(3px,7px,4px) rotateZ(3deg)}
+  50%{transform:translate3d(-11px,-11px,24px) rotateZ(-1deg)}
+}
+  50%{transform:translate3d(8px,-8px,14px) rotateZ(1deg)}
+}
+
+.diamond-glass{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  transform:rotate(45deg);
+  transform-style:preserve-3d;
+  border:1px solid rgba(230,245,255,.58);
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.024) 34%,rgba(91,155,225,.05) 68%,rgba(255,255,255,.08));
+  backdrop-filter:blur(12px) saturate(1.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 16px 12px 35px rgba(255,255,255,.024),
+    inset -18px -14px 38px rgba(53,118,188,.08),
+    0 22px 50px rgba(0,0,0,.27);
+}
+.diamond-glass::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  background:
+    linear-gradient(120deg,rgba(255,255,255,.07) 0 7%,transparent 8% 39%,rgba(110,178,255,.05) 40% 43%,transparent 44% 72%,rgba(255,133,189,.035) 73% 75%,transparent 76%);
+  mix-blend-mode:screen;
+}
+.diamond-facet{
+  position:absolute;
+  pointer-events:none;
+  z-index:3;
+  opacity:.70;
+}
+.facet-a{inset:0 50% 50% 0;background:linear-gradient(135deg,rgba(255,255,255,.10),transparent 70%)}
+.facet-b{inset:0 0 50% 50%;background:linear-gradient(225deg,rgba(115,185,255,.08),transparent 68%)}
+.facet-c{inset:50% 0 0 0;background:linear-gradient(0deg,rgba(255,120,180,.035),rgba(255,255,255,.02) 60%,transparent)}
+.diamond-glare{
+  position:absolute;
+  inset:0;
+  z-index:6;
+  opacity:var(--glare-opacity);
+  background:
+    radial-gradient(circle 150px at var(--glare-x) var(--glare-y),
+      rgba(255,255,255,.98) 0%,
+      rgba(225,243,255,.55) 9%,
+      rgba(155,211,255,.20) 22%,
+      rgba(255,141,193,.05) 37%,
+      transparent 58%);
+  mix-blend-mode:screen;
+  pointer-events:none;
+}
+.diamond-spectrum{
+  position:absolute;
+  inset:-20%;
+  z-index:5;
+  opacity:.25;
+  background:
+    conic-gradient(from 110deg at var(--glare-x) var(--glare-y),
+      transparent 0 40%,
+      rgba(82,186,255,.18) 43%,
+      rgba(255,255,255,.10) 46%,
+      rgba(255,112,174,.16) 49%,
+      transparent 53% 100%);
+  filter:blur(8px);
+  mix-blend-mode:screen;
+  pointer-events:none;
+}
+.diamond-edge{
+  position:absolute;
+  inset:0;
+  z-index:8;
+  pointer-events:none;
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.40),inset -3px -3px 0 rgba(86,160,226,.18);
+}
+.diamond-name,
+.diamond-rank{
+  position:absolute;
+  z-index:10;
+  left:50%;
+  transform:translateX(-50%) rotate(-45deg);
+  color:#fff;
+  text-align:center;
+  width:88%;
+  text-shadow:0 2px 12px rgba(0,0,0,.92),0 0 16px rgba(135,193,255,.12);
+}
+.diamond-name{
+  top:38%;
+  font:900 clamp(21px,2.5vw,35px)/.94 Arial,sans-serif;
+  letter-spacing:-.04em;
+}
+.diamond-rank{
+  top:61%;
+  font-size:9px;
+  letter-spacing:.14em;
+  color:rgba(255,255,255,.70);
+}
+.shard-apex{left:17%;top:20%;width:330px;height:330px}
+.shard-val{right:17%;top:28%;width:295px;height:295px}
+
+/* Passive diamond debris */
+.ambient-diamond{
+  position:absolute;
+  width:52px;height:52px;
+  transform:rotate(45deg);
+  border:1px solid rgba(210,235,255,.26);
+  background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(88,153,220,.025));
+  backdrop-filter:blur(4px);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.18),0 0 18px rgba(100,170,255,.04);
+  opacity:.52;
+}
+.debris-1{left:3%;top:39%;animation:debrisA 10s ease-in-out infinite}
+.debris-2{right:5%;top:7%;width:38px;height:38px;animation:debrisB 8.6s ease-in-out infinite}
+.debris-3{left:54%;top:4%;width:28px;height:28px;animation:debrisC 7.8s ease-in-out infinite}
+.debris-4{right:3%;bottom:16%;width:64px;height:64px;animation:debrisB 11.4s ease-in-out infinite reverse}
+.debris-5{left:10%;bottom:3%;width:34px;height:34px;animation:debrisA 8.2s ease-in-out infinite reverse}
+@keyframes debrisA{
+  0%,100%{transform:translate3d(0,0,-40px) rotate(45deg)}
+  50%{transform:translate3d(17px,-18px,22px) rotate(62deg)}
+}
+@keyframes debrisB{
+  0%,100%{transform:translate3d(0,4px,18px) rotate(45deg)}
+  50%{transform:translate3d(-15px,20px,-18px) rotate(25deg)}
+}
+@keyframes debrisC{
+  0%,100%{transform:translate3d(0,0,35px) rotate(45deg)}
+  50%{transform:translate3d(11px,-13px,-12px) rotate(73deg)}
+}
+.glass-note{
+  position:relative;
+  z-index:8;
+  margin-top:14px;
+  text-align:center;
+  color:#68707f;
+  font-size:9px;
+  letter-spacing:.16em;
+}
+
+
+.glass-pvp::after{
+  content:"";
+  position:absolute;
+  left:5vw;
+  right:5vw;
+  top:24px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  pointer-events:none;
+}
+
+/* White meteors */
+#meteorField{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.meteor{position:absolute;width:200px;height:2px;opacity:0;transform-origin:right center;animation:whiteMeteor var(--dur) linear forwards}
+.meteor-tail{position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.02) 24%,rgba(255,255,255,.16) 58%,rgba(255,255,255,.60) 86%,#fff 100%)}
+.meteor-head{
+  position:absolute;right:-3px;top:50%;width:5px;height:5px;border-radius:50%;
+  transform:translateY(-50%);background:#fff;
+  box-shadow:0 0 4px #fff,0 0 10px rgba(255,255,255,.85),0 0 20px rgba(255,255,255,.42);
+}
+@keyframes whiteMeteor{
+  0%{transform:translate3d(0,0,0) rotate(var(--angle));opacity:0}
+  6%{opacity:1}
+  82%{opacity:.92}
+  100%{transform:translate3d(var(--dx),var(--dy),0) rotate(var(--angle));opacity:0}
+}
+
+/* Shatter -> rebuild */
+#shatterLayer{position:fixed;inset:0;z-index:19998;pointer-events:none}
+.shatter-piece{
+  position:fixed;
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.23),
+      rgba(130,194,245,.10) 36%,
+      rgba(255,255,255,.035) 74%);
+  border:1px solid rgba(238,249,255,.58);
+  backdrop-filter:blur(9px);
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.18),
+    0 0 16px rgba(125,190,255,.11);
+  opacity:1;
+  transform-origin:center;
+  filter:blur(var(--piece-blur));
+  animation:pieceToCenter .80s cubic-bezier(.12,.68,.18,1) forwards;
+}
+.fracture-flash{
+  position:fixed;
+  width:12px;height:12px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:#fff;
+  box-shadow:
+    0 0 10px #fff,
+    0 0 28px rgba(190,230,255,.95),
+    0 0 70px rgba(110,175,255,.45);
+  animation:fractureFlash .34s ease-out forwards;
+}
+.fracture-flash::before,
+.fracture-flash::after{
+  content:"";
+  position:absolute;
+  left:50%;top:50%;
+  width:185px;height:1px;
+  transform-origin:left center;
+  background:linear-gradient(90deg,#fff,rgba(220,240,255,.28),transparent);
+}
+.fracture-flash::before{transform:rotate(27deg)}
+.fracture-flash::after{transform:rotate(-38deg)}
+@keyframes fractureFlash{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+  32%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(2.7)}
+}
+@keyframes pieceToCenter{
+  0%{
+    transform:translate3d(0,0,0) rotate(var(--r0)) scale(1);
+    opacity:1
+  }
+  34%{
+    transform:translate3d(var(--sx),var(--sy),96px) rotate(var(--r1)) scale(.99);
+    opacity:.97
+  }
+  57%{
+    transform:translate3d(calc(var(--sx) * .70),calc(var(--sy) * .70),62px) rotate(calc(var(--r1) * .72)) scale(.88);
+    opacity:.80
+  }
+  100%{
+    transform:translate3d(var(--cx),var(--cy),0) rotate(var(--r2)) scale(.40);
+    opacity:.08
+  }
+}
+
+.rebuild-modal{position:fixed;inset:0;z-index:20000;display:none}
+.rebuild-modal.open{display:block}
+.rebuild-backdrop{
+  position:absolute;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(9px);
+  animation:fadeIn .20s ease
+}
+.rebuild-card{
+  position:absolute;
+  left:50%;top:50%;
+  width:min(760px,90vw);
+  max-height:84vh;
+  overflow:auto;
+  transform:translate(-50%,-50%);
+  padding:34px;
+  color:#eef5ff;
+  background:linear-gradient(135deg,rgba(17,25,39,.88),rgba(5,9,17,.94) 60%,rgba(18,19,31,.90));
+  border:1px solid rgba(210,236,255,.54);
+  backdrop-filter:blur(18px) saturate(1.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.07),
+    0 0 0 1px rgba(95,160,220,.05),
+    0 28px 70px rgba(0,0,0,.58),
+    0 0 34px rgba(109,175,255,.08);
+  clip-path:polygon(4% 0,96% 0,100% 7%,100% 93%,96% 100%,4% 100%,0 93%,0 7%);
+  animation:rebuildPanel .38s cubic-bezier(.17,.84,.22,1) both;
+}
+@keyframes rebuildPanel{
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(.34) rotate(45deg);
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  }
+  48%{
+    opacity:.82;
+    transform:translate(-50%,-50%) scale(.82) rotate(8deg);
+  }
+  100%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1) rotate(0);
+    clip-path:polygon(4% 0,96% 0,100% 7%,100% 93%,96% 100%,4% 100%,0 93%,0 7%);
+  }
+}
+.rebuild-grid{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(rgba(150,195,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(150,195,255,.035) 1px,transparent 1px);
+  background-size:26px 26px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.7),transparent 88%);
+}
+.rebuild-glare{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 72% 12%,rgba(255,255,255,.13),transparent 26%),
+    linear-gradient(115deg,transparent 0 42%,rgba(137,201,255,.04) 43% 47%,transparent 48%);
+}
+.rebuild-header{position:relative;z-index:2;padding-bottom:20px;border-bottom:1px solid rgba(211,235,255,.18)}
+.modal-code{font-size:9px;letter-spacing:.16em;color:#8fa0b6;margin-bottom:13px}
+.rebuild-card h2{
+  margin:0 0 20px;
+  font:900 clamp(40px,6vw,74px)/.86 Arial,sans-serif;
+  letter-spacing:-.06em;
+  color:#fff;
+}
+.modal-rank-wrap{display:flex;align-items:end;justify-content:space-between;gap:20px}
+.modal-rank-wrap span{font-size:9px;letter-spacing:.15em;color:#8190a5}
+.modal-rank-wrap strong{font:900 clamp(36px,5vw,62px)/1 Arial,sans-serif;color:#fff}
+.rebuild-body{position:relative;z-index:2;padding-top:14px}
+.modal-row{
+  display:grid;grid-template-columns:100px 1fr;gap:18px;
+  border-bottom:1px solid rgba(213,235,255,.14);
+  padding:13px 0;font-size:11px
+}
+.modal-row span{color:#7f8da1}
+.modal-row b{text-align:right;color:#e9f2ff}
+.modal-quote{
+  margin-top:22px;border:1px solid rgba(210,235,255,.20);
+  padding:15px;background:rgba(255,255,255,.025)
+}
+.modal-quote span{display:block;font-size:8px;letter-spacing:.15em;color:#7f8da1}
+.modal-quote p{margin:8px 0 0;font:700 13px/1.55 Arial,sans-serif;color:#e7eef8}
+.modal-close{
+  position:absolute;right:14px;top:14px;z-index:8;width:36px;height:36px;
+  border:1px solid rgba(220,240,255,.34);background:rgba(0,0,0,.28);color:#fff;
+  cursor:pointer;font:400 24px/1 Arial,sans-serif
+}
+.rebuild-corner{position:absolute;width:24px;height:24px;border-color:rgba(154,204,255,.48)}
+.c1{left:8px;top:8px;border-left:2px solid;border-top:2px solid}
+.c2{right:8px;top:8px;border-right:2px solid;border-top:2px solid}
+.c3{left:8px;bottom:8px;border-left:2px solid;border-bottom:2px solid}
+.c4{right:8px;bottom:8px;border-right:2px solid;border-bottom:2px solid}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* V1.8 minimal reassembled panel */
+.rebuild-card-minimal{
+  width:min(720px,88vw);
+  min-height:390px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+}
+.minimal-core{
+  position:relative;
+  z-index:3;
+  width:100%;
+  padding:54px 34px 48px;
+}
+.rebuild-card-minimal h2{
+  margin:18px auto 46px;
+  max-width:92%;
+  font:900 clamp(52px,8vw,98px)/.82 Arial,sans-serif;
+  letter-spacing:-.075em;
+  color:#fff;
+}
+.minimal-rank-label{
+  font-size:9px;
+  letter-spacing:.22em;
+  color:#8795a8;
+  margin-bottom:8px;
+}
+.minimal-rank{
+  font:900 clamp(46px,7vw,84px)/1 Arial,sans-serif;
+  color:#fff;
+  text-shadow:
+    0 0 18px rgba(120,185,255,.12),
+    0 0 28px rgba(255,125,176,.05);
+}
+
+body.modal-open{overflow:hidden}
+
+.steam{
+  position:relative;z-index:8;display:flex;justify-content:center;margin-top:31px
+}
+.steam a{
+  display:inline-flex;align-items:center;gap:12px;padding:13px 22px;
+  border:1px solid rgba(255,255,255,.24);border-radius:14px;
+  background:rgba(0,0,0,.46);backdrop-filter:blur(8px);
+  text-decoration:none;font-weight:900;transition:.18s
+}
+.steam a:hover{
+  transform:translateY(-2px);border-color:rgba(255,255,255,.74);
+  box-shadow:0 8px 22px rgba(0,0,0,.35),0 0 18px rgba(116,178,255,.05)
+}
+
+footer{
+  padding:28px 5vw 38px;display:flex;justify-content:space-between;
+  color:#777;font-size:9px;background:#030305
+}
+
+/* responsive */
+@media(max-width:980px){
+  .music{grid-template-columns:auto 1fr auto;width:90vw}
+  .music input{display:none}
+  .hero-content{padding-top:120px}
+  .sticker-row{justify-content:flex-start;overflow-x:auto;padding:18px 6vw 28px}
+  .sticker{min-width:160px}
+  .universe{transform:scale(.82);transform-origin:top center;margin-bottom:-110px}
+}
+@media(max-width:620px){
+  .music{grid-template-columns:auto 1fr auto;gap:9px}
+  .music-meta small{display:none}
+  .album{width:34px;height:34px}
+  .hero-content{padding-left:5vw;padding-right:5vw}
+  .title-block h1{font-size:62px}
+  .sticker{min-width:145px}
+  .sticker img,.media-art{height:130px}
+  .universe{transform:scale(.58);transform-origin:top center;margin-bottom:-250px}
+  footer{flex-direction:column;gap:10px}
+}
+
+@media(max-width:900px){
+  .manga-grid{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:300px 280px;
+  }
+  .modal-card{
+    grid-template-columns:1fr;
+  }
+  .modal-visual{
+    min-height:300px;
+    max-height:340px;
+  }
+  .modal-visual img{
+    min-height:300px;
+  }
+}
+@media(max-width:620px){
+  .manga-grid{
+    display:flex;
+    flex-direction:column;
+  }
+  .manga-panel{
+    height:260px;
+    clip-path:polygon(2% 2%,98% 0,95% 96%,5% 100%);
+  }
+  .panel-wide{
+    height:230px;
+  }
+  .modal-info{
+    padding:42px 20px 24px;
+  }
+  .modal-row{
+    grid-template-columns:75px 1fr;
+  }
+}
+
+@media(max-width:900px){
+  .glass-stage{
+    height:760px;
+  }
+  .shard-apex{
+    left:2%;
+    width:55%;
+    height:300px;
+  }
+  .shard-val{
+    right:1%;
+    width:48%;
+    height:285px;
+  }
+    .modal-card{
+    grid-template-columns:1fr;
+  }
+  .modal-visual{
+    min-height:300px;
+    max-height:340px;
+  }
+  .modal-visual img{
+    min-height:300px;
+  }
+}
+@media(max-width:620px){
+  .glass-stage{
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+  .glass-shard,
+  .shard-apex,
+  .shard-val,
+    .glass-inner,
+  .shard-apex .glass-inner,
+  .shard-val .glass-inner,
+  .glass-edge,
+  .shard-apex .glass-edge,
+  .shard-val .glass-edge,
+  .modal-info{padding:42px 20px 24px}
+  .modal-row{grid-template-columns:75px 1fr}
+}
+
+@media(max-width:900px){
+  .glass-stage{
+    height:790px;
+  }
+  .shard-apex{
+    left:1%;
+    width:56%;
+    height:315px;
+  }
+  .shard-val{
+    right:0;
+    width:49%;
+    height:292px;
+  }
+    .ambient-shard{
+    opacity:.38;
+  }
+  .modal-card{
+    grid-template-columns:1fr;
+  }
+  .modal-visual{
+    min-height:300px;
+    max-height:340px;
+  }
+  .modal-visual img{
+    min-height:300px;
+  }
+}
+@media(max-width:620px){
+  .pvp{
+    padding-left:4vw;
+    padding-right:4vw;
+  }
+  .glass-stage{
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    perspective:900px;
+  }
+  .glass-shard,
+  .shard-apex,
+  .shard-val,
+    .shard-apex .glass-inner,
+  .shard-apex .glass-edge,
+  .shard-val .glass-inner,
+  .shard-val .glass-edge,
+  .ambient-shard{
+    display:none;
+  }
+  .float-shell{
+    animation-duration:9s!important;
+  }
+  .modal-info{
+    padding:42px 20px 24px;
+  }
+  .modal-row{
+    grid-template-columns:75px 1fr;
+  }
+}
+
+@media(max-width:900px){
+  .diamond-stage{height:790px}
+  .shard-apex{left:6%;width:270px;height:270px}
+  .shard-val{right:6%;width:230px;height:230px}
+  }
+@media(max-width:620px){
+  .pvp{padding-left:4vw;padding-right:4vw}
+  .diamond-stage{
+    height:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:40px;
+    padding:24px 0 34px;
+  }
+  .diamond-shard,
+  .shard-apex,
+  .shard-val,
+    .ambient-diamond{display:none}
+  .rebuild-card{padding:26px 18px 22px}
+  .modal-row{grid-template-columns:76px 1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .rebuild-card{
+    --panel-rx:0deg!important;
+    --panel-ry:0deg!important;
+    --panel-tx:0px!important;
+    --panel-ty:0px!important;
+  }
+  .diamond-float{transform:none!important}
+  .shatter-piece{display:none!important}
+  .rebuild-card{transform:translate(-50%,-50%)!important;clip-path:none!important}
+}
+
+/* V1.8 — Shin background with soft black edge falloff */
+.hero{
+  background:#030304 !important;
+}
+.hero-bg{
+  background-image:
+    radial-gradient(
+      ellipse at 67% 46%,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,.04) 42%,
+      rgba(0,0,0,.22) 62%,
+      rgba(0,0,0,.62) 80%,
+      rgba(0,0,0,.93) 100%
+    ),
+    url("assets/shin.jpg") !important;
+  background-position:center center, 70% center !important;
+  background-size:cover, auto 100% !important;
+  background-repeat:no-repeat !important;
+  filter:grayscale(1) contrast(1.06) brightness(.82) !important;
+  opacity:1 !important;
+}
+.hero-bg::before{
+  content:"";
+  position:absolute;
+  inset:-6%;
+  z-index:-1;
+  background:url("assets/shin-halo.jpg") center/cover no-repeat;
+  filter:blur(18px);
+  opacity:.26;
+}
+.hero-bg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,.92) 0%,
+      rgba(0,0,0,.64) 13%,
+      rgba(0,0,0,.25) 31%,
+      rgba(0,0,0,.06) 49%,
+      rgba(0,0,0,.12) 68%,
+      rgba(0,0,0,.70) 88%,
+      rgba(0,0,0,.96) 100%),
+    linear-gradient(180deg,
+      rgba(0,0,0,.22) 0%,
+      rgba(0,0,0,0) 28%,
+      rgba(0,0,0,.10) 68%,
+      #030304 100%);
+  pointer-events:none;
+}
+.hero-copy-shade{
+  width:min(55vw,830px) !important;
+  background:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.32) 64%,transparent) !important;
+}
+.album{
+  background-image:url("assets/shin.jpg") !important;
+  background-position:45% 22% !important;
+  background-size:cover !important;
+}
+
+/* V1.8 — reassembled card gets pointer-driven gravity tilt */
+.rebuild-card{
+  --panel-rx:0deg;
+  --panel-ry:0deg;
+  --panel-tx:0px;
+  --panel-ty:0px;
+  --panel-light-x:50%;
+  --panel-light-y:50%;
+  transform:
+    translate(-50%,-50%)
+    translate3d(var(--panel-tx),var(--panel-ty),0)
+    rotateX(var(--panel-rx))
+    rotateY(var(--panel-ry)) !important;
+  transform-style:preserve-3d;
+  transition:
+    transform .14s cubic-bezier(.2,.75,.2,1),
+    box-shadow .14s ease;
+  will-change:transform;
+}
+.rebuild-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  background:
+    radial-gradient(
+      circle 180px at var(--panel-light-x) var(--panel-light-y),
+      rgba(255,255,255,.12),
+      rgba(150,205,255,.05) 28%,
+      transparent 58%
+    );
+  mix-blend-mode:screen;
+}
+.rebuild-card.gravity-active{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.07),
+    0 0 0 1px rgba(95,160,220,.05),
+    0 30px 80px rgba(0,0,0,.62),
+    0 0 38px rgba(109,175,255,.10) !important;
+}
+@media (max-width:760px){
+  .hero-bg{
+    background-position:center center, 62% center !important;
+    background-size:cover, auto 100% !important;
+  }
+}
+
+
+/* ==================== V1.8 HERO EDGE FADE ==================== */
+
+/*
+  The problem in V1.8 was that the portrait itself still had a visible rectangular edge.
+  V1.8 uses a separate image layer with CSS mask-image, so the manga image physically
+  fades to transparent before it reaches the black page background.
+*/
+.hero-bg{
+  background:
+    radial-gradient(circle at 66% 42%,rgba(255,255,255,.035),transparent 29%),
+    linear-gradient(180deg,#050506 0%,#040405 66%,#020203 100%) !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+.hero-bg::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:-2%;
+  bottom:-3%;
+  left:50%;
+  width:min(54vw,760px);
+  transform:translateX(-28%);
+  background:url("assets/shin.jpg") center 18% / auto 104% no-repeat;
+  filter:grayscale(1) contrast(1.07) brightness(.72);
+  opacity:.96;
+
+  /* Real soft edge falloff, not a rectangular picture boundary */
+  -webkit-mask-image:
+    linear-gradient(to right,
+      transparent 0%,
+      rgba(0,0,0,.06) 5%,
+      rgba(0,0,0,.34) 13%,
+      #000 27%,
+      #000 73%,
+      rgba(0,0,0,.36) 87%,
+      rgba(0,0,0,.06) 95%,
+      transparent 100%),
+    linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0,0,0,.40) 7%,
+      #000 15%,
+      #000 83%,
+      rgba(0,0,0,.34) 94%,
+      transparent 100%);
+  -webkit-mask-composite:source-in;
+  mask-image:
+    linear-gradient(to right,
+      transparent 0%,
+      rgba(0,0,0,.06) 5%,
+      rgba(0,0,0,.34) 13%,
+      #000 27%,
+      #000 73%,
+      rgba(0,0,0,.36) 87%,
+      rgba(0,0,0,.06) 95%,
+      transparent 100%),
+    linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0,0,0,.40) 7%,
+      #000 15%,
+      #000 83%,
+      rgba(0,0,0,.34) 94%,
+      transparent 100%);
+  mask-composite:intersect;
+}
+
+.hero-bg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 62% 37%,transparent 0 30%,rgba(0,0,0,.06) 48%,rgba(0,0,0,.34) 72%,rgba(0,0,0,.76) 100%),
+    linear-gradient(90deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.48) 22%,rgba(0,0,0,.05) 50%,rgba(0,0,0,.22) 76%,rgba(0,0,0,.82) 100%),
+    linear-gradient(180deg,rgba(0,0,0,.12),transparent 26%,transparent 66%,#030304 100%);
+}
+
+/* Blur-only halo underneath the sharp portrait so the fade feels atmospheric. */
+.hero::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:54%;
+  top:46%;
+  width:min(47vw,700px);
+  height:72%;
+  transform:translate(-25%,-50%);
+  background:url("assets/shin-halo.jpg") center / cover no-repeat;
+  filter:blur(30px) grayscale(1);
+  opacity:.12;
+  border-radius:45%;
+  pointer-events:none;
+}
+
+.hero-copy-shade{
+  width:min(54vw,820px) !important;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,.80) 0%,
+      rgba(0,0,0,.50) 48%,
+      rgba(0,0,0,.17) 76%,
+      transparent 100%) !important;
+}
+
+/* ==================== V1.8 MODAL GRAVITY ==================== */
+
+/*
+  V1.8 felt strange because the card translated toward the cursor AND rotated too much.
+  Now it behaves like a suspended heavy glass panel:
+  - center of viewport is neutral
+  - movement uses tiny perspective rotation only
+  - no side translation
+  - motion is smoothed with interpolation in JS
+  - cursor lighting follows independently from physical tilt
+*/
+.rebuild-card{
+  --panel-rx:0deg;
+  --panel-ry:0deg;
+  --panel-light-x:50%;
+  --panel-light-y:50%;
+
+  transform:
+    translate(-50%,-50%)
+    perspective(1100px)
+    rotateX(var(--panel-rx))
+    rotateY(var(--panel-ry)) !important;
+
+  transform-origin:50% 52%;
+  transition:box-shadow .20s ease;
+  will-change:transform;
+}
+
+.rebuild-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    radial-gradient(
+      circle 210px at var(--panel-light-x) var(--panel-light-y),
+      rgba(255,255,255,.10),
+      rgba(170,215,255,.035) 30%,
+      transparent 64%
+    );
+  mix-blend-mode:screen;
+}
+
+.rebuild-card.gravity-active{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.065),
+    0 0 0 1px rgba(95,160,220,.045),
+    0 30px 78px rgba(0,0,0,.60),
+    0 0 30px rgba(109,175,255,.055) !important;
+}
+
+@media (max-width:900px){
+  .hero-bg::before{
+    width:68vw;
+    transform:translateX(-30%);
+    background-size:auto 100%;
+  }
+}
+
+@media (max-width:620px){
+  .hero-bg::before{
+    left:56%;
+    width:94vw;
+    transform:translateX(-34%);
+    opacity:.62;
+  }
+  .hero-copy-shade{
+    width:100vw !important;
+  }
+}
+
+
+
+/* ==================== V1.8 SEAMLESS HERO BACKGROUND ==================== */
+/*
+  V1.8 uses a precomposed wide hero image with baked feathering.
+  The portrait no longer exists as a rectangular browser layer, so there is
+  no vertical seam to reveal at any viewport size.
+*/
+.hero{
+  background:#020203 !important;
+}
+.hero-bg{
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.08) 70%,#020203 100%),
+    url("assets/shin-hero-v17.jpg") center center / cover no-repeat !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+.hero-bg::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 63% 43%,
+      rgba(255,255,255,.015) 0%,
+      transparent 38%,
+      rgba(0,0,0,.10) 64%,
+      rgba(0,0,0,.34) 82%,
+      rgba(0,0,0,.60) 100%);
+  pointer-events:none;
+}
+.hero-bg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,.62) 0%,
+      rgba(0,0,0,.34) 20%,
+      rgba(0,0,0,.08) 45%,
+      rgba(0,0,0,.02) 62%,
+      rgba(0,0,0,.18) 82%,
+      rgba(0,0,0,.46) 100%),
+    linear-gradient(180deg,
+      rgba(0,0,0,.10) 0%,
+      transparent 25%,
+      transparent 67%,
+      #020203 100%);
+  pointer-events:none;
+}
+.hero::before{
+  display:none !important;
+}
+.hero-copy-shade{
+  width:min(54vw,820px) !important;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,.74) 0%,
+      rgba(0,0,0,.46) 48%,
+      rgba(0,0,0,.15) 74%,
+      transparent 100%) !important;
+}
+@media(max-width:900px){
+  .hero-bg{
+    background-position:58% center !important;
+  }
+}
+@media(max-width:620px){
+  .hero-bg{
+    background-position:62% center !important;
+  }
+}
+
+
+/* ==================== V1.8 MUSIC PLAYER ALIGNMENT ==================== */
+.music{
+  left:7vw !important;
+  right:auto !important;
+  transform:none !important;
+  width:min(760px,72vw) !important;
+}
+@media(max-width:980px){
+  .music{
+    left:5vw !important;
+    width:90vw !important;
+  }
+}
+@media(max-width:620px){
+  .music{
+    left:4vw !important;
+    width:92vw !important;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="scan"></div>
+<div id="cursorGlow"></div>
+
+<div id="boot">
+  <div class="bootbox">
+    <div style="font-size:10px;letter-spacing:.15em;color:#aaa">PURE ARCHIVE SYSTEM / V1.8</div>
+    <div class="boot-title">INITIALIZING PLAYER DATA...</div>
+    <div class="log">
+      [ OK ] PLAYER PROFILE<br>
+      [ OK ] STICKER BACKGROUND SYSTEM<br>
+      [ OK ] 3D PLANET RENDERER<br>
+      [ OK ] METEOR FIELD<br>
+      [ OK ] AUDIO: ROSE
+    </div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div id="pct">0%</div>
+    <button id="enter">ENTER ARCHIVE</button>
+  </div>
+</div>
+
+<div id="transport">
+  <div class="transport-wrap">
+    <div class="rays"></div>
+    <div class="disc"></div>
+    <div class="blackhole"></div>
+    <div class="transport-text">TRANSPORTING TO PURE'S WORLD...</div>
+  </div>
+</div>
+
+<div id="site">
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-copy-shade"></div>
+
+  <div class="music">
+    <div class="music-meta">
+      <div class="album"></div>
+      <div>
+        <b>rose</b>
+        <small>loop</small>
+      </div>
+    </div>
+
+    <div class="progress" id="progress">
+      <span id="progressFill"></span>
+    </div>
+
+    <button id="musicBtn" aria-label="Play or pause">Ⅱ</button>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="music-time" id="time">00:00</span>
+      <input id="vol" type="range" min="0" max="1" step=".01" value=".55">
+    </div>
+
+    <audio id="audio" src="assets/rose.mp3" loop preload="auto"></audio>
+  </div>
+
+  <div class="hero-content">
+    <div class="title-block" style="position:relative">
+      <div class="title-orbit" aria-hidden="true">
+        <div class="title-orbit-ring"></div>
+        <i class="orbit-star s1"></i>
+        <i class="orbit-star s2"></i>
+        <i class="orbit-star s3"></i>
+        <i class="orbit-star s4"></i>
+        <i class="orbit-star s5"></i>
+        <i class="title-spark a"></i>
+        <i class="title-spark b"></i>
+        <i class="title-spark c"></i>
+      </div>
+      <h1>PURE'S</h1>
+      <h2>GAME PROFILE</h2>
+      <div class="welcome">♥ &nbsp; WELCOME TO MY WORLD.</div>
+    </div>
+
+    <div class="sticker-row">
+      <article class="sticker s1">
+        <i class="tape"></i>
+        <img src="assets/nana.jpg" alt="NANA / Shin" class="sticker-photo">
+        <div class="sticker-cap"><b>NANA</b><small>2006 · Anime</small></div>
+      </article>
+
+      <article class="sticker s2">
+        <i class="tape"></i>
+        <img src="assets/manchester.jpg" alt="Manchester by the Sea" class="sticker-photo">
+        <div class="sticker-cap"><b>Manchester by the Sea</b><small>2016 · Movie</small></div>
+      </article>
+
+      <article class="sticker s3">
+        <i class="tape"></i>
+        <img src="assets/paprika.jpg" alt="Paprika" class="sticker-photo">
+        <div class="sticker-cap"><b>红辣椒</b><small>2006 · Anime Movie</small></div>
+      </article>
+
+      <article class="sticker s4">
+        <i class="tape"></i>
+        <img src="assets/takopi.jpg" alt="Takopi's Original Sin">
+        <div class="sticker-cap"><b>章鱼P的原罪</b><small>Anime · Archive</small></div>
+      </article>
+
+      <article class="sticker s5">
+        <i class="tape"></i>
+        <img src="assets/arknights.webp" alt="Arknights" class="sticker-photo">
+        <div class="sticker-cap"><b>明日方舟</b><small>2019 · Game</small></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="scroll-curl" id="scrollCurl" aria-hidden="true">
+  <div class="scroll-sheet" id="scrollSheet">
+    <div class="scroll-edge"></div>
+  </div>
+  <div class="scroll-hint"><span class="scroll-chevron"></span>SCROLL TO EXPLORE</div>
+</div>
+
+
+
+
+
+<section class="pvp glass-pvp" id="pvp">
+  <div class="space-nebula nebula-a"></div>
+  <div class="space-nebula nebula-b"></div>
+  <div class="space-grid"></div>
+  <div id="meteorField"></div>
+<div class="diamond-stage" id="glassStage">
+    <div class="ambient-diamond debris-1"></div>
+    <div class="ambient-diamond debris-2"></div>
+    <div class="ambient-diamond debris-3"></div>
+    <div class="ambient-diamond debris-4"></div>
+    <div class="ambient-diamond debris-5"></div>
+
+    <button class="diamond-shard shard-apex"
+      data-game="APEX LEGENDS"
+      data-rank="MASTER"
+      data-status="MAIN GAME"
+      data-id="APEX ID: [ADD YOUR ID]"
+      data-extra="PLAYSTYLE: COMPETITIVE"
+      aria-label="Open Apex Legends player card">
+      <div class="diamond-float">
+        <div class="diamond-glass">
+          <div class="diamond-facet facet-a"></div>
+          <div class="diamond-facet facet-b"></div>
+          <div class="diamond-facet facet-c"></div>
+          <div class="diamond-glare"></div>
+          <div class="diamond-spectrum"></div>
+          <div class="diamond-edge"></div>
+          <div class="diamond-name">APEX<br>LEGENDS</div>
+          <div class="diamond-rank">MASTER</div>
+        </div>
+      </div>
+    </button>
+
+    <button class="diamond-shard shard-val"
+      data-game="VALORANT"
+      data-rank="SILVER"
+      data-status="CASUAL GAME"
+      data-id="RIOT ID: [ADD YOUR ID]"
+      data-extra="PLAYSTYLE: CASUAL"
+      aria-label="Open Valorant player card">
+      <div class="diamond-float">
+        <div class="diamond-glass">
+          <div class="diamond-facet facet-a"></div>
+          <div class="diamond-facet facet-b"></div>
+          <div class="diamond-facet facet-c"></div>
+          <div class="diamond-glare"></div>
+          <div class="diamond-spectrum"></div>
+          <div class="diamond-edge"></div>
+          <div class="diamond-name">VALORANT</div>
+          <div class="diamond-rank">SILVER</div>
+        </div>
+      </div>
+    </button>
+  </div>
+
+  <div class="glass-note">CLICK GLASS // FRACTURE → REBUILD</div>
+
+  <div class="steam">
+    <a href="https://steamcommunity.com/profiles/76561198864276446/" target="_blank" rel="noopener noreferrer">
+      ◉ &nbsp; STEAM PROFILE ↗
+    </a>
+  </div>
+</section>
+
+<div class="rebuild-modal" id="gameModal" aria-hidden="true">
+  <div class="rebuild-backdrop" data-close-modal></div>
+
+  <article class="rebuild-card rebuild-card-minimal" role="dialog" aria-modal="true" aria-labelledby="modalGame">
+    <div class="rebuild-grid"></div>
+    <div class="rebuild-glare"></div>
+    <button class="modal-close" data-close-modal aria-label="Close">×</button>
+
+    <div class="minimal-core">
+      <div class="modal-code">PLAYER FILE // REASSEMBLED</div>
+      <h2 id="modalGame">APEX LEGENDS</h2>
+
+      <div class="minimal-rank-label">RANK</div>
+      <div class="minimal-rank" id="modalRank">MASTER</div>
+    </div>
+
+    <div class="rebuild-corner c1"></div>
+    <div class="rebuild-corner c2"></div>
+    <div class="rebuild-corner c3"></div>
+    <div class="rebuild-corner c4"></div>
+  </article>
+</div>
+
+<div id="shatterLayer" aria-hidden="true"></div>
+
+
+
+
+<footer>
+  <span>© 2026 PURE'S GAME PROFILE</span>
+  <span>steamcommunity.com/profiles/76561198864276446/</span>
+</footer>
+</div>
+
+<script>
+/* ---------------- BOOT ---------------- */
+let p=0;
+const fill=document.getElementById('fill');
+const pct=document.getElementById('pct');
+const enter=document.getElementById('enter');
+const boot=document.getElementById('boot');
+const transport=document.getElementById('transport');
+const site=document.getElementById('site');
+
+const loadTimer=setInterval(()=>{
+  p += Math.floor(Math.random()*11)+6;
+  if(p>=100){
+    p=100;
+    clearInterval(loadTimer);
+    enter.style.display='block';
+  }
+  fill.style.width=p+'%';
+  pct.textContent=p+'%';
+},130);
+
+/* ---------------- MUSIC ---------------- */
+const audio=document.getElementById('audio');
+const musicBtn=document.getElementById('musicBtn');
+const vol=document.getElementById('vol');
+const timeEl=document.getElementById('time');
+const progress=document.getElementById('progress');
+const progressFill=document.getElementById('progressFill');
+
+audio.loop=true;
+audio.volume=.55;
+
+async function startMusic(){
+  try{
+    await audio.play();
+    musicBtn.textContent='Ⅱ';
+  }catch(e){
+    musicBtn.textContent='▶';
+  }
+}
+
+musicBtn.addEventListener('click',async()=>{
+  if(audio.paused){
+    try{
+      await audio.play();
+      musicBtn.textContent='Ⅱ';
+    }catch(e){}
+  }else{
+    audio.pause();
+    musicBtn.textContent='▶';
+  }
+});
+
+vol.addEventListener('input',()=>{
+  audio.volume=Number(vol.value);
+});
+
+audio.addEventListener('timeupdate',()=>{
+  const pct=(audio.currentTime/audio.duration)*100||0;
+  progressFill.style.width=pct+'%';
+
+  const m=Math.floor(audio.currentTime/60).toString().padStart(2,'0');
+  const s=Math.floor(audio.currentTime%60).toString().padStart(2,'0');
+  timeEl.textContent=m+':'+s;
+});
+
+progress.addEventListener('click',e=>{
+  if(!audio.duration)return;
+  const rect=progress.getBoundingClientRect();
+  audio.currentTime=((e.clientX-rect.left)/rect.width)*audio.duration;
+});
+
+/* ---------------- ENTER ---------------- */
+let entering=false;
+function enterWorld(){
+  if(entering)return;
+  entering=true;
+  startMusic();
+
+  boot.style.opacity='0';
+  boot.style.transition='opacity .28s ease';
+
+  setTimeout(()=>{
+    boot.style.display='none';
+    transport.style.display='grid';
+
+    setTimeout(()=>{
+      transport.style.opacity='0';
+      transport.style.transition='opacity .38s ease';
+
+      setTimeout(()=>{
+        transport.style.display='none';
+        site.style.display='block';
+        window.scrollTo(0,0);
+      },390);
+    },1850);
+  },290);
+}
+enter.addEventListener('click',enterWorld);
+window.addEventListener('keydown',()=>{
+  if(enter.style.display==='block'&&boot.style.display!=='none'){
+    enterWorld();
+  }
+});
+
+/* ---------------- SCROLL CURL EFFECT ---------------- */
+const scrollSheet=document.getElementById('scrollSheet');
+const heroSection=document.getElementById('hero');
+
+function updateScrollCurl(){
+  if(!scrollSheet || !heroSection)return;
+
+  const heroRect=heroSection.getBoundingClientRect();
+  const vh=window.innerHeight;
+
+  // starts curling as the bottom of hero approaches the viewport
+  const progress=Math.max(
+    0,
+    Math.min(
+      1,
+      (vh - heroRect.bottom + 170) / 320
+    )
+  );
+
+  const rotate=progress*76;
+  const lift=progress*58;
+  const scaleY=1-progress*.42;
+
+  scrollSheet.style.transform=
+    `translateY(${-lift}px) rotateX(${rotate}deg) scaleY(${scaleY})`;
+
+  scrollSheet.style.borderRadius=
+    `${progress*55}% ${progress*55}% 18px 18px / ${progress*80}% ${progress*80}% 18px 18px`;
+}
+
+window.addEventListener('scroll',updateScrollCurl,{passive:true});
+window.addEventListener('resize',updateScrollCurl);
+updateScrollCurl();
+
+/* ---------------- CURSOR GLOW ---------------- */
+const glow=document.getElementById('cursorGlow');
+window.addEventListener('mousemove',e=>{
+  glow.style.left=e.clientX+'px';
+  glow.style.top=e.clientY+'px';
+  glow.style.opacity='1';
+});
+window.addEventListener('mouseleave',()=>glow.style.opacity='0');
+
+/* ---------------- STICKER INTERACTION ---------------- */
+/* V1.8: hover-only. The hero background is permanently fixed to Shin. */
+document.querySelectorAll('.sticker').forEach(sticker=>{
+  sticker.addEventListener('click',e=>e.preventDefault());
+});
+
+/* ---------------- DIAMOND GLASS INTERACTION ---------------- */
+const glassStage=document.getElementById('glassStage');
+const glassShards=[...document.querySelectorAll('.diamond-shard')];
+
+function updateGlassLighting(clientX,clientY){
+  glassShards.forEach(shard=>{
+    const rect=shard.getBoundingClientRect();
+    const cx=rect.left+rect.width/2;
+    const cy=rect.top+rect.height/2;
+
+    const relX=(clientX-rect.left)/rect.width;
+    const relY=(clientY-rect.top)/rect.height;
+
+    const glareX=Math.max(-20,Math.min(120,relX*100));
+    const glareY=Math.max(-20,Math.min(120,relY*100));
+
+    const dx=clientX-cx;
+    const dy=clientY-cy;
+    const dist=Math.hypot(dx,dy);
+    const influence=Math.max(0,1-dist/360);
+
+    const pushStrength=14*influence;
+    const len=Math.max(1,dist);
+
+    const pushX=-(dx/len)*pushStrength;
+    const pushY=-(dy/len)*pushStrength;
+    const tiltY=Math.max(-5,Math.min(5,(relX-.5)*8))*influence;
+    const tiltX=Math.max(-4,Math.min(4,(.5-relY)*6.5))*influence;
+
+    shard.style.setProperty('--glare-x',glareX.toFixed(1)+'%');
+    shard.style.setProperty('--glare-y',glareY.toFixed(1)+'%');
+    shard.style.setProperty('--push-x',pushX.toFixed(2)+'px');
+    shard.style.setProperty('--push-y',pushY.toFixed(2)+'px');
+    shard.style.setProperty('--tilt-x',tiltX.toFixed(2)+'deg');
+    shard.style.setProperty('--tilt-y',tiltY.toFixed(2)+'deg');
+    shard.style.setProperty('--glare-opacity',(.18+influence*.72).toFixed(2));
+  });
+}
+
+let rafId=0;
+let pendingX=0;
+let pendingY=0;
+
+window.addEventListener('mousemove',e=>{
+  pendingX=e.clientX;
+  pendingY=e.clientY;
+
+  if(!rafId){
+    rafId=requestAnimationFrame(()=>{
+      updateGlassLighting(pendingX,pendingY);
+      rafId=0;
+    });
+  }
+},{passive:true});
+
+window.addEventListener('mouseleave',()=>{
+  glassShards.forEach(shard=>{
+    shard.style.setProperty('--push-x','0px');
+    shard.style.setProperty('--push-y','0px');
+    shard.style.setProperty('--tilt-x','0deg');
+    shard.style.setProperty('--tilt-y','0deg');
+    shard.style.setProperty('--glare-opacity','.26');
+  });
+});
+
+/* ---------------- SHATTER + REASSEMBLE ---------------- */
+const gameModal=document.getElementById('gameModal');
+const shatterLayer=document.getElementById('shatterLayer');
+const modalGame=document.getElementById('modalGame');
+const modalRank=document.getElementById('modalRank');
+
+function setModalData(shard){
+  modalGame.textContent=shard.dataset.game || '';
+  modalRank.textContent=shard.dataset.rank || '';
+}
+
+function makeShatterPieces(shard,clickX,clickY){
+  const rect=shard.getBoundingClientRect();
+  const centerX=window.innerWidth/2;
+  const centerY=window.innerHeight/2;
+  shatterLayer.innerHTML='';
+
+  const localX=Math.max(0,Math.min(rect.width,clickX-rect.left));
+  const localY=Math.max(0,Math.min(rect.height,clickY-rect.top));
+
+  const flash=document.createElement('div');
+  flash.className='fracture-flash';
+  flash.style.left=(rect.left+localX)+'px';
+  flash.style.top=(rect.top+localY)+'px';
+  shatterLayer.appendChild(flash);
+
+  const rings=[
+    {inner:0,outer:.25,sectors:7},
+    {inner:.20,outer:.52,sectors:9},
+    {inner:.46,outer:.80,sectors:11},
+    {inner:.72,outer:1.10,sectors:12}
+  ];
+
+  let total=0;
+
+  rings.forEach((ring,ringIndex)=>{
+    let angle=-Math.PI+(Math.random()-.5)*.18;
+
+    for(let i=0;i<ring.sectors;i++){
+      const nominal=(Math.PI*2)/ring.sectors;
+      const span=nominal*(.68+Math.random()*.64);
+      const a0=angle;
+      const a1=angle+span;
+      angle=a1;
+
+      const maxR=Math.max(rect.width,rect.height)*.68;
+      const innerA=ring.inner*(.78+Math.random()*.28);
+      const innerB=ring.inner*(.78+Math.random()*.28);
+      const outerA=ring.outer*(.82+Math.random()*.28);
+      const outerB=ring.outer*(.82+Math.random()*.28);
+      const midA=(a0+a1)/2+(Math.random()-.5)*span*.16;
+
+      const pts=[
+        [localX+Math.cos(a0)*maxR*innerA,localY+Math.sin(a0)*maxR*innerA],
+        [localX+Math.cos(a1)*maxR*innerB,localY+Math.sin(a1)*maxR*innerB],
+        [localX+Math.cos(a1)*maxR*outerB,localY+Math.sin(a1)*maxR*outerB],
+        [localX+Math.cos(midA)*maxR*(ring.outer*(.88+Math.random()*.18)),
+         localY+Math.sin(midA)*maxR*(ring.outer*(.88+Math.random()*.18))],
+        [localX+Math.cos(a0)*maxR*outerA,localY+Math.sin(a0)*maxR*outerA]
+      ];
+
+      const clipped=pts.map(([x,y])=>[
+        Math.max(0,Math.min(rect.width,x)),
+        Math.max(0,Math.min(rect.height,y))
+      ]);
+
+      const xs=clipped.map(p=>p[0]), ys=clipped.map(p=>p[1]);
+      const minX=Math.min(...xs), maxX=Math.max(...xs);
+      const minY=Math.min(...ys), maxY=Math.max(...ys);
+      const width=maxX-minX, height=maxY-minY;
+      if(width<8||height<8) return;
+
+      const piece=document.createElement('div');
+      piece.className='shatter-piece';
+
+      const left=rect.left+minX;
+      const top=rect.top+minY;
+      piece.style.left=left+'px';
+      piece.style.top=top+'px';
+      piece.style.width=width+'px';
+      piece.style.height=height+'px';
+
+      const poly=clipped.map(([x,y])=>{
+        const px=((x-minX)/width)*100;
+        const py=((y-minY)/height)*100;
+        return `${px.toFixed(1)}% ${py.toFixed(1)}%`;
+      });
+      piece.style.clipPath=`polygon(${poly.join(',')})`;
+
+      const px=left+width/2;
+      const py=top+height/2;
+      const ox=px-(rect.left+localX);
+      const oy=py-(rect.top+localY);
+      const len=Math.max(1,Math.hypot(ox,oy));
+      const burst=28+Math.random()*48;
+
+      piece.style.setProperty('--sx',((ox/len)*burst+(Math.random()-.5)*14).toFixed(1)+'px');
+      piece.style.setProperty('--sy',((oy/len)*burst+(Math.random()-.5)*14).toFixed(1)+'px');
+      piece.style.setProperty('--cx',(centerX-px).toFixed(1)+'px');
+      piece.style.setProperty('--cy',(centerY-py).toFixed(1)+'px');
+      piece.style.setProperty('--r0',(Math.random()*12-6).toFixed(1)+'deg');
+      piece.style.setProperty('--r1',(Math.random()*150-75).toFixed(1)+'deg');
+      piece.style.setProperty('--r2',(Math.random()*34-17).toFixed(1)+'deg');
+      piece.style.setProperty('--piece-blur',(Math.random()*.48).toFixed(2)+'px');
+      piece.style.animationDelay=(Math.random()*100)+'ms';
+
+      shatterLayer.appendChild(piece);
+      total++;
+    }
+  });
+
+  return total;
+}
+
+function openRebuildModal(shard,clickX,clickY){
+  if(shard.classList.contains('is-shattering')) return;
+
+  setModalData(shard);
+  makeShatterPieces(shard,clickX,clickY);
+  shard.classList.add('is-shattering');
+
+  setTimeout(()=>{
+    gameModal.classList.add('open');
+    gameModal.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+  },650);
+
+  setTimeout(()=>{
+    shatterLayer.innerHTML='';
+    shard.classList.remove('is-shattering');
+  },1120);
+}
+
+glassShards.forEach(shard=>{
+  shard.addEventListener('click',e=>openRebuildModal(shard,e.clientX,e.clientY));
+});
+
+function closeGameModal(){
+  gameModal.classList.remove('open');
+  gameModal.setAttribute('aria-hidden','true');
+  document.body.classList.remove('modal-open');
+}
+
+document.querySelectorAll('[data-close-modal]').forEach(el=>{
+  el.addEventListener('click',closeGameModal);
+});
+
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape' && gameModal.classList.contains('open')){
+    closeGameModal();
+  }
+});
+
+
+/* ---------------- V1.8 REASSEMBLED CARD GRAVITY ---------------- */
+const rebuildCard=document.querySelector('.rebuild-card');
+
+let gravityRAF=0;
+let targetRX=0;
+let targetRY=0;
+let currentRX=0;
+let currentRY=0;
+let targetLightX=50;
+let targetLightY=50;
+let currentLightX=50;
+let currentLightY=50;
+
+function gravityFrame(){
+  if(!rebuildCard || !gameModal.classList.contains('open')){
+    gravityRAF=0;
+    return;
+  }
+
+  // Smooth inertial response instead of snapping to pointer position.
+  currentRX += (targetRX-currentRX)*.11;
+  currentRY += (targetRY-currentRY)*.11;
+  currentLightX += (targetLightX-currentLightX)*.16;
+  currentLightY += (targetLightY-currentLightY)*.16;
+
+  rebuildCard.style.setProperty('--panel-rx',currentRX.toFixed(2)+'deg');
+  rebuildCard.style.setProperty('--panel-ry',currentRY.toFixed(2)+'deg');
+  rebuildCard.style.setProperty('--panel-light-x',currentLightX.toFixed(1)+'%');
+  rebuildCard.style.setProperty('--panel-light-y',currentLightY.toFixed(1)+'%');
+
+  const stillMoving=
+    Math.abs(targetRX-currentRX)>.02 ||
+    Math.abs(targetRY-currentRY)>.02 ||
+    Math.abs(targetLightX-currentLightX)>.1 ||
+    Math.abs(targetLightY-currentLightY)>.1;
+
+  if(stillMoving){
+    gravityRAF=requestAnimationFrame(gravityFrame);
+  }else{
+    gravityRAF=0;
+  }
+}
+
+function queueGravityFrame(){
+  if(!gravityRAF){
+    gravityRAF=requestAnimationFrame(gravityFrame);
+  }
+}
+
+window.addEventListener('mousemove',e=>{
+  if(!rebuildCard || !gameModal.classList.contains('open')) return;
+
+  const rect=rebuildCard.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+
+  const nx=Math.max(-1,Math.min(1,(e.clientX-cx)/(window.innerWidth*.46)));
+  const ny=Math.max(-1,Math.min(1,(e.clientY-cy)/(window.innerHeight*.46)));
+
+  // Heavy suspended panel: very restrained tilt.
+  // Pointer right = right edge feels heavier and leans away naturally.
+  targetRY=nx*4.2;
+  targetRX=-ny*2.8;
+
+  targetLightX=Math.max(3,Math.min(97,((e.clientX-rect.left)/rect.width)*100));
+  targetLightY=Math.max(3,Math.min(97,((e.clientY-rect.top)/rect.height)*100));
+
+  rebuildCard.classList.add('gravity-active');
+  queueGravityFrame();
+},{passive:true});
+
+function resetPanelGravity(){
+  if(!rebuildCard) return;
+  targetRX=0;
+  targetRY=0;
+  targetLightX=50;
+  targetLightY=50;
+  rebuildCard.classList.remove('gravity-active');
+  queueGravityFrame();
+}
+
+window.addEventListener('mouseleave',resetPanelGravity);
+
+// Reset every time the modal closes so reopening starts perfectly neutral.
+document.querySelectorAll('[data-close-modal]').forEach(el=>{
+  el.addEventListener('click',resetPanelGravity);
+});
+
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape') resetPanelGravity();
+});
+
+
+/* ---------------- METEORS ---------------- */
+/*
+  Meteors now enter from outside the upper-right edge and move down-left.
+  The glowing head leads the motion, with a long fading tail behind it.
+*/
+const meteorField=document.getElementById('meteorField');
+
+function spawnMeteor(){
+  const meteor=document.createElement('div');
+  meteor.className='meteor';
+
+  const startX=window.innerWidth*(.72+Math.random()*.34);
+  const startY=-40-Math.random()*160;
+
+  const dx=-(window.innerWidth*(.85+Math.random()*.35));
+  const dy=window.innerHeight*(.70+Math.random()*.42);
+
+  const angle=Math.atan2(dy,dx)*180/Math.PI;
+
+  meteor.style.left=startX+'px';
+  meteor.style.top=startY+'px';
+  meteor.style.setProperty('--dx',dx+'px');
+  meteor.style.setProperty('--dy',dy+'px');
+  meteor.style.setProperty('--angle',angle+'deg');
+  meteor.style.setProperty('--dur',(1.0+Math.random()*.75)+'s');
+
+  meteor.innerHTML=
+    '<span class="meteor-tail"></span>'+
+    '<span class="meteor-head"></span>';
+
+  meteorField.appendChild(meteor);
+  meteor.addEventListener('animationend',()=>meteor.remove());
+}
+
+function meteorCycle(){
+  const delay=1800+Math.random()*3400;
+
+  setTimeout(()=>{
+    spawnMeteor();
+
+    // occasional second meteor, but not every time
+    if(Math.random()>.78){
+      setTimeout(spawnMeteor,180+Math.random()*420);
+    }
+
+    meteorCycle();
+  },delay);
+}
+
+meteorCycle();
+</script>
+
+</body>
+</html>
